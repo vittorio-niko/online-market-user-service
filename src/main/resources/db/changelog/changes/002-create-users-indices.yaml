@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-users-indices
+      author: vittorio-niko
+      changes:
+        - createIndex:
+            tableName: users
+            indexName: idx_users_email
+            unique: true
+            columns:
+              - column:
+                  name: email
+        - createIndex:
+            tableName: users
+            indexName: idx_users_name_surname
+            columns:
+              - column:
+                  name: name
+              - column:
+                  name: surname
+        - createIndex:
+            tableName: users
+            indexName: idx_users_created_at
+            columns:
+              - column:
+                  name: created_at

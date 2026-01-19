@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-payment-cards-indices
+      author: vittorio-niko
+      changes:
+        - createIndex:
+            tableName: payment_cards
+            indexName: idx_payment_cards_user_id
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            tableName: payment_cards
+            indexName: idx_payment_cards_number
+            unique: true
+            columns:
+              - column:
+                  name: number
+        - createIndex:
+            tableName: payment_cards
+            indexName: idx_payment_cards_expiration_date
+            columns:
+              - column:
+                  name: expiration_date
+        - createIndex:
+            tableName: payment_cards
+            indexName: idx_payment_cards_user_id_active
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: active
+        - createIndex:
+            tableName: payment_cards
+            indexName: idx_payment_cards_created_at
+            columns:
+              - column:
+                  name: created_at
