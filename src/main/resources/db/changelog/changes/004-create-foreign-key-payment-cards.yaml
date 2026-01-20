@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 004-create-fpreign-key-for-payment-cards
+      id: 004-create-foreign-key-for-payment-cards
       author: vittorio-niko
       changes:
         - addForeignKeyConstraint:
