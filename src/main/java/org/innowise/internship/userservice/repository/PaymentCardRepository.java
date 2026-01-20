@@ -33,7 +33,7 @@ public interface PaymentCardRepository extends
     """)
     Optional<PaymentCard> findByIdAndUserId(@Param("cardId") Long cardId,
                                              @Param("userId") Long userId);
-    
+
     @Query(
             value = "SELECT * FROM payment_cards WHERE user_id = :userId",
             nativeQuery = true
