@@ -1,0 +1,25 @@
+package org.innowise.internship.userservice.model.dto.response.user;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserResponseDto {
+    private Long id;
+    private String name;
+    private String surname;
+    private String email;
+    private LocalDate birthDate;
+    private Boolean active;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}
