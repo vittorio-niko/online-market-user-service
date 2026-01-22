@@ -30,17 +30,17 @@ public class PaymentCard extends BaseAuditEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, foreignKey =
+    @JoinColumn(name = "user_id", nullable = false, updatable = false, foreignKey =
         @ForeignKey(name = "fk_payment_cards_user_id"))
     private User user;
 
-    @Column(name = "number", nullable = false, unique = true, length = 16)
+    @Column(name = "number", nullable = false, unique = true, updatable = false, length = 16)
     private String number;
 
-    @Column(name = "holder", nullable = false, length = 100)
+    @Column(name = "holder", nullable = false, updatable = false, length = 100)
     private String holder;
 
-    @Column(name = "expiration_date", nullable = false)
+    @Column(name = "expiration_date", nullable = false, updatable = false)
     private LocalDate expirationDate;
 
     @Column(name = "active", nullable = false)
