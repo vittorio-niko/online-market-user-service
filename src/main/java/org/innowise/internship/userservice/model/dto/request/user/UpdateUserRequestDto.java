@@ -1,6 +1,5 @@
 package org.innowise.internship.userservice.model.dto.request.user;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
@@ -28,8 +27,4 @@ public class UpdateUserRequestDto {
 
     @PastOrPresent
     private LocalDate birthDate;
-
-    @Email
-    @Size(max = 255)
-    private String email;
 }
