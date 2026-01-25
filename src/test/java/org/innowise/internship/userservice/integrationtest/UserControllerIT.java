@@ -24,6 +24,7 @@ public class UserControllerIT extends AbstractIntegrationTest {
     void cleanDb() {
         jdbcTemplate.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
         jdbcTemplate.execute("TRUNCATE TABLE payment_cards RESTART IDENTITY CASCADE");
+        clearAllCaches();
     }
 
     // methods for creating default user and card
