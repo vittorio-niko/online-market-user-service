@@ -16,6 +16,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 @Entity
@@ -24,7 +25,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Table(name = "payment_cards")
 @EqualsAndHashCode(callSuper = true)
-public class PaymentCard extends BaseAuditEntity {
+public class PaymentCard extends BaseAuditEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
