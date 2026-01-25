@@ -8,6 +8,7 @@ import org.innowise.internship.userservice.model.entity.User;
 import org.innowise.internship.userservice.repository.UserRepository;
 import org.innowise.internship.userservice.service.exception.NotFoundException;
 import org.innowise.internship.userservice.service.specification.UserSpecification;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ public class UserQueryService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "UserQueryService::getUserById", key = "#id")
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found"));
