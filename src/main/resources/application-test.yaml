@@ -1,4 +1,8 @@
 spring:
+  config:
+    activate:
+      on-profile: test
+
   datasource:
     url: jdbc:postgresql://localhost:5432/user_service_test
     username: postgres_test
@@ -39,7 +43,13 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
-          
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://keycloak:8080/realms/user-service}
+
   main:
     allow-bean-definition-overriding: true
 

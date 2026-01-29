@@ -1,4 +1,7 @@
 spring:
+  config:
+    activate:
+      on-profile: docker
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -38,6 +41,12 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
 
 server:
   port: ${SERVER_PORT}

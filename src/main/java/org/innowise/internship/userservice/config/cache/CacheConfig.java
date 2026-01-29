@@ -1,4 +1,4 @@
-package org.innowise.internship.userservice.config;
+package org.innowise.internship.userservice.config.cache;
 
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
