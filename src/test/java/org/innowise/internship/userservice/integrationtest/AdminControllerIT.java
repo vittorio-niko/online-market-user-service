@@ -1,12 +1,18 @@
 package org.innowise.internship.userservice.integrationtest;
 
+import org.innowise.internship.userservice.controller.security.UserSecurity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -22,23 +28,29 @@ import static org.hamcrest.Matchers.*;
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 public class AdminControllerIT extends AbstractIntegrationTest {
+    @MockBean
+    private UserSecurity userSecurity;
+
     @BeforeEach
     void cleanDb() {
         jdbcTemplate.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
         jdbcTemplate.execute("TRUNCATE TABLE payment_cards RESTART IDENTITY CASCADE");
         clearAllCaches();
+        when(userSecurity.isOwner(anyLong())).thenReturn(true);
     }
 
     // methods for creating default user and card
     private Long createTestUser() throws Exception {
-        String userJson = """
+        String keycloakId = UUID.randomUUID().toString();
+        String userJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "John",
                   "surname": "Doe",
                   "birthDate": "1990-01-01",
                   "email": "john.doe@example.com"
                 }
-                """;
+                """, keycloakId);
 
         String response = mockMvc.perform(post("/users")
                         .contentType(JSON)
@@ -77,14 +89,16 @@ public class AdminControllerIT extends AbstractIntegrationTest {
     void adminGetAllUsers_shouldGetAllSuccessfully() throws Exception {
         // create multiple users
         for (int i = 0; i < 3; i++) {
+            String keycloakId = UUID.randomUUID().toString();
             String userJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "User%d",
                   "surname": "Test",
                   "birthDate": "1990-01-01",
                   "email": "user%d@example.com"
                 }
-                """, i, i);
+                """, keycloakId, i, i);
 
             mockMvc.perform(post("/users")
                             .contentType(JSON)
@@ -107,14 +121,16 @@ public class AdminControllerIT extends AbstractIntegrationTest {
         createTestUser();
 
         // Create another user with different name
-        String secondUserJson = """
+        String keycloakId = UUID.randomUUID().toString();
+        String secondUserJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "Alice",
                   "surname": "Smith",
                   "birthDate": "1995-05-15",
                   "email": "alice.smith@example.com"
                 }
-                """;
+                """, keycloakId);
 
         mockMvc.perform(post("/users")
                         .contentType(JSON)
@@ -262,14 +278,16 @@ public class AdminControllerIT extends AbstractIntegrationTest {
     void adminGetAllUsers_shouldHandlePaginationSuccessfully() throws Exception {
         // create 15 users
         for (int i = 0; i < 15; i++) {
+            String keycloakId = UUID.randomUUID().toString();
             String userJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "User%d",
                   "surname": "Test",
                   "birthDate": "1990-01-01",
                   "email": "user%d@example.com"
                 }
-                """, i, i);
+                """, keycloakId, i, i);
 
             mockMvc.perform(post("/users")
                             .contentType(JSON)

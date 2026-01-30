@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -11,34 +12,44 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.innowise.internship.userservice.controller.security.UserSecurity;
 import org.junit.jupiter.api.DisplayName;
 import java.time.LocalDate;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 
 @Testcontainers
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 public class UserControllerIT extends AbstractIntegrationTest {
+    @MockBean
+    private UserSecurity userSecurity;
+
     @BeforeEach
     void cleanDb() {
         jdbcTemplate.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
         jdbcTemplate.execute("TRUNCATE TABLE payment_cards RESTART IDENTITY CASCADE");
         clearAllCaches();
+        when(userSecurity.isOwner(anyLong())).thenReturn(true);
     }
 
     // methods for creating default user and card
     private Long createTestUser() throws Exception {
-        String userJson = """
+        String keycloakId = UUID.randomUUID().toString();
+        String userJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "John",
                   "surname": "Doe",
                   "birthDate": "1990-01-01",
                   "email": "john.doe@example.com"
                 }
-                """;
+                """, keycloakId);
 
         String response = mockMvc.perform(post("/users")
                         .contentType(JSON)
@@ -75,14 +86,16 @@ public class UserControllerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should create user successfully")
     void createUser_shouldCreateSuccessfully() throws Exception {
-        String userJson = """
+        String keycloakId = UUID.randomUUID().toString();
+        String userJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "Alice",
                   "surname": "Smith",
                   "birthDate": "1985-05-15",
                   "email": "alice.smith@example.com"
                 }
-                """;
+                """, keycloakId);
 
         mockMvc.perform(post("/users")
                         .contentType(JSON)
@@ -99,16 +112,33 @@ public class UserControllerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should return conflict when creating user with duplicate email")
     void createUser_shouldReturnConflictForDuplicateEmail() throws Exception {
-        createTestUser();
+        String keycloakId1 = UUID.randomUUID().toString();
+        String keycloakId2 = UUID.randomUUID().toString();
 
-        String duplicateUserJson = """
+        String userJson1 = String.format("""
                 {
+                  "keycloakId": "%s",
+                  "name": "John",
+                  "surname": "Doe",
+                  "birthDate": "1990-01-01",
+                  "email": "john.doe@example.com"
+                }
+                """, keycloakId1);
+
+        mockMvc.perform(post("/users")
+                        .contentType(JSON)
+                        .content(userJson1))
+                .andExpect(status().isCreated());
+
+        String duplicateUserJson = String.format("""
+                {
+                  "keycloakId": "%s",
                   "name": "John",
                   "surname": "Smith",
                   "birthDate": "1995-05-15",
                   "email": "john.doe@example.com"
                 }
-                """;
+                """, keycloakId2);
 
         mockMvc.perform(post("/users")
                         .contentType(JSON)
@@ -121,14 +151,15 @@ public class UserControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should return bad request when creating user with invalid data")
     void createUser_shouldReturnBadRequestForInvalidData() throws Exception {
         // test invalid email
-        String invalidEmailJson = """
+        String invalidEmailJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "John",
                   "surname": "Doe",
                   "birthDate": "1990-01-01",
                   "email": "invalid-email"
                 }
-                """;
+                """, UUID.randomUUID());
 
         mockMvc.perform(post("/users")
                         .contentType(JSON)
@@ -136,14 +167,15 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         // test future birthdate
-        String futureDateJson = """
+        String futureDateJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "John",
                   "surname": "Doe",
                   "birthDate": "2050-01-01",
                   "email": "john@example.com"
                 }
-                """;
+                """, UUID.randomUUID());
 
         mockMvc.perform(post("/users")
                         .contentType(JSON)
@@ -151,9 +183,24 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         // test empty name
-        String emptyNameJson = """
+        String emptyNameJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "",
+                  "surname": "Doe",
+                  "birthDate": "1990-01-01",
+                  "email": "john@example.com"
+                }
+                """, UUID.randomUUID());
+
+        mockMvc.perform(post("/users")
+                        .contentType(JSON)
+                        .content(emptyNameJson))
+                .andExpect(status().isBadRequest());
+
+        String missingKeycloakIdJson = """
+                {
+                  "name": "John",
                   "surname": "Doe",
                   "birthDate": "1990-01-01",
                   "email": "john@example.com"
@@ -162,7 +209,7 @@ public class UserControllerIT extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/users")
                         .contentType(JSON)
-                        .content(emptyNameJson))
+                        .content(missingKeycloakIdJson))
                 .andExpect(status().isBadRequest());
     }
 
