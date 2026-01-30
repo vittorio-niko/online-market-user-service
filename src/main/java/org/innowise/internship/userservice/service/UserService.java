@@ -14,7 +14,6 @@ import org.innowise.internship.userservice.repository.UserRepository;
 import org.innowise.internship.userservice.service.exception.*;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -34,17 +33,24 @@ public class UserService {
 
     @Transactional
     public User createUser(@NonNull CreateUserRequestDto dto) {
+        String keycloakId = dto.getKeycloakId();
+
+        if (userRepository.existsByKeycloakId(keycloakId)) {
+            throw new KeycloakIdAlreadyExistsException("User with such keycloak id already exists");
+        }
+
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new EmailAlreadyUsedException("User with such email already exists");
         }
 
         User user = userRequestMapper.toUser(dto);
         user.setActive(true);
+        user.setKeycloakId(keycloakId);
 
         try {
             return userRepository.save(user);
         } catch (DataIntegrityViolationException e) {
-            throw new EmailAlreadyUsedException("User with such email already exists", e);
+            throw new UserAlreadyExistsException("User with such email or keycloak id already exists", e);
         }
     }
 
@@ -98,7 +104,7 @@ public class UserService {
 
         if (dto.getExpirationDate().isBefore(LocalDate.now())) {
             throw new PaymentCardAlreadyExpiredException("Card is already expired");
-        };
+        }
 
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
