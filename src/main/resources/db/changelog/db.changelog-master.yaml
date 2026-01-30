@@ -9,3 +9,7 @@ databaseChangeLog:
       file: db/changelog/changes/004-create-foreign-key-payment-cards.yaml
   - include:
       file: db/changelog/changes/005-create-payment-cards-indices.yaml
+  - include:
+      file: db/changelog/changes/006-add-keycloak-id-field-into-users-table.yaml
+  - include:
+      file: db/changelog/changes/007-create-keycloak-id-index.yaml
