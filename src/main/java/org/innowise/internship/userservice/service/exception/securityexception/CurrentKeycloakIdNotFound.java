@@ -1,4 +1,4 @@
-package org.innowise.internship.userservice.service.exception;
+package org.innowise.internship.userservice.service.exception.securityexception;
 
 public class CurrentKeycloakIdNotFound extends SecurityException {
     public CurrentKeycloakIdNotFound(String message) {
