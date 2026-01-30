@@ -31,6 +31,9 @@ public class User extends BaseAuditEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "keycloak_id", nullable = false, unique = true, updatable = false)
+    private String keycloakId;
+
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 

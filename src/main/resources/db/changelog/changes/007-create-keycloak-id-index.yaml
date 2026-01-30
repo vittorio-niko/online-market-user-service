@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-create-keycloack-id-index
+      author: vittorio-niko
+      changes:
+        - createIndex:
+            tableName: users
+            indexName: idx_users_keycloak_id
+            unique: true
+            columns:
+              - column:
+                  name: keycloak_id

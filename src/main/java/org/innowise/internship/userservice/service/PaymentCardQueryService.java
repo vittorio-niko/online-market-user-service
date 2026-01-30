@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.innowise.internship.userservice.model.entity.PaymentCard;
 import org.innowise.internship.userservice.repository.PaymentCardRepository;
 import org.innowise.internship.userservice.repository.UserRepository;
-import org.innowise.internship.userservice.service.exception.NotFoundException;
+import org.innowise.internship.userservice.service.exception.businessexception.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

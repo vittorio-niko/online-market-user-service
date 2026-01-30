@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-add-keycloack-id-field-into-users-table
+      author: vittorio-niko
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: keycloak_id
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
