@@ -35,4 +35,9 @@ public interface UserRepository extends
     @Query("UPDATE User u SET u.active = :active WHERE u.id = :id")
     int updateActiveStatus(@Param("id") Long id,
                            @Param("active") boolean active);
+
+    Optional<User> findByKeycloakId(String keycloakId);
+
+    boolean existsByKeycloakId(String keycloakId);
+    boolean existsByIdAndKeycloakId(Long id, String keycloakId);
 }
