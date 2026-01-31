@@ -1,9 +1,10 @@
-package org.innowise.internship.userservice.integrationtest;
+package org.innowise.internship.userservice.integrationtest.controllertest;
 
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.innowise.internship.userservice.controller.security.UserSecurity;
+import org.innowise.internship.userservice.integrationtest.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
