@@ -1,6 +1,7 @@
-package org.innowise.internship.userservice.integrationtest;
+package org.innowise.internship.userservice.integrationtest.controllertest;
 
 import org.innowise.internship.userservice.controller.security.UserSecurity;
+import org.innowise.internship.userservice.integrationtest.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
