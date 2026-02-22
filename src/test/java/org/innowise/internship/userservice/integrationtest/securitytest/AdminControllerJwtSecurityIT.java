@@ -43,7 +43,7 @@ class AdminControllerJwtSecurityIT extends AbstractIntegrationTest {
 
         String response = mockMvc.perform(post("/users")
                         .with(jwt().authorities(
-                                new SimpleGrantedAuthority("ROLE_USER")
+                                new SimpleGrantedAuthority("ROLE_ADMIN")
                         ))
                         .contentType(JSON)
                         .content(userJson))
