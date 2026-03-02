@@ -1,6 +1,6 @@
 package org.innowise.internship.userservice.integrationtest.controllertest;
 
-import org.innowise.internship.userservice.controller.security.UserSecurity;
+import org.innowise.internship.userservice.controller.securitycontext.CurrentUserProvider;
 import org.innowise.internship.userservice.integrationtest.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,14 +30,14 @@ import static org.hamcrest.Matchers.*;
 @ActiveProfiles("test")
 public class AdminControllerIT extends AbstractIntegrationTest {
     @MockBean
-    private UserSecurity userSecurity;
+    private CurrentUserProvider currentUserProvider;
 
     @BeforeEach
     void cleanDb() {
         jdbcTemplate.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
         jdbcTemplate.execute("TRUNCATE TABLE payment_cards RESTART IDENTITY CASCADE");
         clearAllCaches();
-        when(userSecurity.isOwner(anyLong())).thenReturn(true);
+        //when(userSecurity.isOwner(anyLong())).thenReturn(true);
     }
 
     // methods for creating default user and card
@@ -74,7 +74,8 @@ public class AdminControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().plusYears(1).format(DATE_FORMATTER));
 
-        String response = mockMvc.perform(post("/users/" + userId + "/cards")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        String response = mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(cardJson))
                 .andExpect(status().isCreated())
@@ -173,7 +174,7 @@ public class AdminControllerIT extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // verify user is inactive
-        mockMvc.perform(get("/users/" + userId)
+        mockMvc.perform(get("/admin/users/" + userId)
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));
@@ -184,7 +185,7 @@ public class AdminControllerIT extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // verify user is active
-        mockMvc.perform(get("/users/" + userId)
+        mockMvc.perform(get("/admin/users/" + userId)
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(true));
@@ -200,7 +201,7 @@ public class AdminControllerIT extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // verify user is inactive
-        mockMvc.perform(get("/users/" + userId)
+        mockMvc.perform(get("/admin/users/" + userId)
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));
@@ -216,7 +217,7 @@ public class AdminControllerIT extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // verify user is deleted
-        mockMvc.perform(get("/users/" + userId)
+        mockMvc.perform(get("/admin/users/" + userId)
                         .contentType(JSON))
                 .andExpect(status().isNotFound());
     }
@@ -241,7 +242,7 @@ public class AdminControllerIT extends AbstractIntegrationTest {
         Long cardId = createTestPaymentCard(userId);
 
         // deactivate the card
-        mockMvc.perform(put("/users/" + userId + "/cards/" + cardId + "/deactivate")
+        mockMvc.perform(put("/admin/users/" + userId + "/cards/" + cardId + "/deactivate")
                         .contentType(JSON))
                 .andExpect(status().isNoContent());
 
@@ -251,7 +252,8 @@ public class AdminControllerIT extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // verify card is active
-        mockMvc.perform(get("/users/" + userId + "/cards/" + cardId)
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/my-cards/" + cardId)
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(true));
@@ -268,7 +270,8 @@ public class AdminControllerIT extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // verify card is inactive
-        mockMvc.perform(get("/users/" + userId + "/cards/" + cardId)
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/my-cards/" + cardId)
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));

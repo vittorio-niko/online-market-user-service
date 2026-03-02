@@ -69,7 +69,7 @@ class UserControllerJwtSecurityIT extends AbstractIntegrationTest {
                 }
                 """, testUserId, LocalDate.now().plusYears(1).format(DATE_FORMATTER));
 
-        String cardResponse = mockMvc.perform(post("/users/{userId}/cards", testUserId)
+        String cardResponse = mockMvc.perform(post("/users/my-cards")
                         .with(jwt().jwt(jwt -> jwt.subject(testUserKeycloakId))
                                 .authorities(new SimpleGrantedAuthority("ROLE_USER")))
                         .contentType(JSON)
@@ -85,25 +85,25 @@ class UserControllerJwtSecurityIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("Access without jwt is denied")
     void shouldReturn401_whenGetUserByIdWithoutToken() throws Exception {
-        mockMvc.perform(get("/users/{id}", testUserId))
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @DisplayName("Forbidden to access profile of another user")
-    void shouldReturn403_whenGetOtherUserProfile() throws Exception {
+    void shouldReturn404_whenGetNonExistentUserProfile() throws Exception {
         String otherUserKeycloakId = UUID.randomUUID().toString();
 
-        mockMvc.perform(get("/users/{id}", testUserId)
+        mockMvc.perform(get("/users/me")
                         .with(jwt().jwt(jwt -> jwt.subject(otherUserKeycloakId))
                                 .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("Should access own profile successfully")
     void shouldReturn200_whenGetOwnUserProfile() throws Exception {
-        mockMvc.perform(get("/users/{id}", testUserId)
+        mockMvc.perform(get("/users/me")
                         .with(jwt().jwt(jwt -> jwt.subject(testUserKeycloakId))
                                 .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
                 .andExpect(status().isOk())
@@ -127,9 +127,7 @@ class UserControllerJwtSecurityIT extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/users")
                 .with(jwt()
-                        .jwt(jwt -> jwt
-                                .subject(newKeycloakId)
-                        )
+                        .jwt(jwt -> jwt.subject(newKeycloakId))
                         .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")
                 ))
                 .contentType(JSON)
@@ -139,86 +137,13 @@ class UserControllerJwtSecurityIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("Forbidden to update another user profile")
-    void shouldReturn403_whenUpdateOtherUserProfile() throws Exception {
-        String otherUserKeycloakId = UUID.randomUUID().toString();
-        String updateJson = """
-                {
-                  "name": "UpdatedName",
-                  "surname": "UpdatedSurname"
-                }
-                """;
-
-        mockMvc.perform(put("/users/{id}", testUserId)
-                        .with(jwt().jwt(jwt -> jwt.subject(otherUserKeycloakId))
-                                .authorities(new SimpleGrantedAuthority("ROLE_USER")))
-                        .contentType(JSON)
-                        .content(updateJson))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @DisplayName("Forbidden to delete another user profile")
-    void shouldReturn403_whenDeleteOtherUser() throws Exception {
-        String otherUserKeycloakId = UUID.randomUUID().toString();
-
-        mockMvc.perform(delete("/users/{id}", testUserId)
-                        .with(jwt().jwt(jwt -> jwt.subject(otherUserKeycloakId))
-                                .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @DisplayName("Forbidden to access cards of another user")
-    void shouldReturn403_whenGetOtherUserCards() throws Exception {
-        String otherUserKeycloakId = UUID.randomUUID().toString();
-
-        mockMvc.perform(get("/users/{userId}/cards", testUserId)
-                        .with(jwt().jwt(jwt -> jwt.subject(otherUserKeycloakId))
-                                .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
     @DisplayName("Should access own card successfully")
     void shouldReturn200_whenGetOwnCard() throws Exception {
-        mockMvc.perform(get("/users/{userId}/cards/{cardId}", testUserId, testUserCardId)
+        mockMvc.perform(get("/users/my-cards/{cardId}", testUserCardId)
                         .with(jwt().jwt(jwt -> jwt.subject(testUserKeycloakId))
                                 .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testUserCardId));
-    }
-
-    @Test
-    @DisplayName("Forbidden to create card for another user")
-    void shouldReturn403_whenCreateCardForOtherUser() throws Exception {
-        String otherUserKeycloakId = UUID.randomUUID().toString();
-        String cardJson = String.format("""
-                {
-                  "userId": %d,
-                  "number": "4111111111119999",
-                  "holder": "VITTORIO RUI",
-                  "expirationDate": "%s"
-                }
-                """, 999, LocalDate.now().plusYears(5).format(DATE_FORMATTER));
-
-        mockMvc.perform(post("/users/{userId}/cards", testUserId)
-                        .with(jwt().jwt(jwt -> jwt.subject(otherUserKeycloakId))
-                                .authorities(new SimpleGrantedAuthority("ROLE_USER")))
-                        .contentType(JSON)
-                        .content(cardJson))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @DisplayName("Forbidden to delete a card of another user")
-    void shouldReturn403_whenDeleteOtherUserCard() throws Exception {
-        String otherUserKeycloakId = UUID.randomUUID().toString();
-
-        mockMvc.perform(delete("/users/{userId}/cards/{cardId}", testUserId, testUserCardId)
-                        .with(jwt().jwt(jwt -> jwt.subject(otherUserKeycloakId))
-                                .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
-                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -231,10 +156,10 @@ class UserControllerJwtSecurityIT extends AbstractIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(put("/users/" + testUserId)
-                        .with(jwt().authorities(
-                                new SimpleGrantedAuthority("ROLE_ADMIN")
-                        ))
+        mockMvc.perform(put("/users/me")
+                        .with(jwt()
+                                .jwt(jwt -> jwt.subject(testUserKeycloakId))
+                                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(JSON)
                 .content(updateJson))
                 .andExpect(status().isForbidden())
