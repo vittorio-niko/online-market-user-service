@@ -30,6 +30,13 @@ public class UserQueryService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "UserQueryService::getInternalIdByKeycloakId", key = "#keycloakId")
+    public Long getInternalIdByKeycloakId(String keycloakId) {
+        return userRepository.findIdByKeycloakId(keycloakId)
+                .orElseThrow(() -> new NotFoundException("User with such keycloak id does not exist"));
+    }
+
+    @Transactional(readOnly = true)
     public Page<User> getAllUsers(@NonNull Pageable pageable) {
         return userRepository.findAll(pageable);
     }

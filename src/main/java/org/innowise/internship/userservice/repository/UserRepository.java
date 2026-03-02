@@ -39,5 +39,7 @@ public interface UserRepository extends
     Optional<User> findByKeycloakId(String keycloakId);
 
     boolean existsByKeycloakId(String keycloakId);
-    boolean existsByIdAndKeycloakId(Long id, String keycloakId);
+
+    @Query("SELECT u.id FROM User u WHERE u.keycloakId = :keycloakId")
+    Optional<Long> findIdByKeycloakId(@Param("keycloakId") String keycloakId);
 }
