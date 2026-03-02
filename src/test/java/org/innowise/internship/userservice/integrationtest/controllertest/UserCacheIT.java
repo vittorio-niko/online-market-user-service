@@ -3,7 +3,7 @@ package org.innowise.internship.userservice.integrationtest.controllertest;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
-import org.innowise.internship.userservice.controller.security.UserSecurity;
+import org.innowise.internship.userservice.controller.securitycontext.CurrentUserProvider;
 import org.innowise.internship.userservice.integrationtest.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,11 +28,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 public class UserCacheIT extends AbstractIntegrationTest {
+    @MockBean
+    private CurrentUserProvider currentUserProvider;
+
     @Autowired
     private EntityManagerFactory entityManagerFactory;
-
-    @MockBean
-    private UserSecurity userSecurity;
 
     private Statistics hibernateStats() {
         SessionFactory sf = entityManagerFactory.unwrap(SessionFactory.class);
@@ -45,11 +46,10 @@ public class UserCacheIT extends AbstractIntegrationTest {
         jdbcTemplate.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
         jdbcTemplate.execute("TRUNCATE TABLE payment_cards RESTART IDENTITY CASCADE");
         clearAllCaches();
-        when(userSecurity.isOwner(anyLong())).thenReturn(true);
     }
 
     private Long createTestUser() throws Exception {
-        String keycloakId = java.util.UUID.randomUUID().toString();
+        String keycloakId = UUID.randomUUID().toString();
         String userJson = String.format("""
                 {
                   "keycloakId": "%s",
@@ -78,7 +78,8 @@ public class UserCacheIT extends AbstractIntegrationTest {
         Statistics stats = hibernateStats();
 
         // first call -> db
-        mockMvc.perform(get("/users/" + userId))
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isOk());
 
         long sqlAfterFirstCall = stats.getPrepareStatementCount();
@@ -90,7 +91,7 @@ public class UserCacheIT extends AbstractIntegrationTest {
         );
 
         // second call -> cache
-        mockMvc.perform(get("/users/" + userId))
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isOk());
 
         long sqlAfterSecondCall = stats.getPrepareStatementCount();
@@ -108,7 +109,8 @@ public class UserCacheIT extends AbstractIntegrationTest {
         Long userId = createTestUser();
 
         // warm up cache
-        mockMvc.perform(get("/users/" + userId))
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(true));
 
@@ -117,7 +119,7 @@ public class UserCacheIT extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // cache must be evicted, fresh DB read
-        mockMvc.perform(get("/users/" + userId))
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));
     }
@@ -128,7 +130,8 @@ public class UserCacheIT extends AbstractIntegrationTest {
         Long userId = createTestUser();
 
         // warm up cache
-        mockMvc.perform(get("/users/" + userId))
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("John"));
 
@@ -140,14 +143,14 @@ public class UserCacheIT extends AbstractIntegrationTest {
                 """;
 
         // update user
-        mockMvc.perform(put("/users/" + userId)
+        mockMvc.perform(put("/users/me")
                         .contentType(JSON)
                         .content(updateJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Jonathan"));
 
         // second get -> must return updated cached value
-        mockMvc.perform(get("/users/" + userId))
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Jonathan"));
     }
@@ -158,15 +161,16 @@ public class UserCacheIT extends AbstractIntegrationTest {
         Long userId = createTestUser();
 
         // warm up cache
-        mockMvc.perform(get("/users/" + userId))
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isOk());
 
         // delete user
-        mockMvc.perform(delete("/users/" + userId))
+        mockMvc.perform(delete("/users/me"))
                 .andExpect(status().isNoContent());
 
         // cache must be evicted -> 404
-        mockMvc.perform(get("/users/" + userId))
+        mockMvc.perform(get("/admin/users/" + userId))
                 .andExpect(status().isNotFound());
     }
 
@@ -176,7 +180,8 @@ public class UserCacheIT extends AbstractIntegrationTest {
         Long userId = createTestUser();
 
         // warm up cache (active = true)
-        mockMvc.perform(get("/users/" + userId))
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(true));
 
@@ -185,7 +190,7 @@ public class UserCacheIT extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // business logic must see inactive user
-        mockMvc.perform(delete("/users/" + userId + "/cards/1"))
+        mockMvc.perform(delete("/users/my-cards/1"))
                 .andExpect(status().isBadRequest());
     }
 }
