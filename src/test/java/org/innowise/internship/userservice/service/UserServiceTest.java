@@ -35,6 +35,8 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    private static final Integer MAX_CARDS_PER_USER = 5;
+
     // createUser
     @Test
     @DisplayName("Should create user successfully")
@@ -253,7 +255,7 @@ class UserServiceTest {
 
         when(paymentCardRepository.existsByNumber(any())).thenReturn(false);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(paymentCardRepository.countPaymentCardsById(1L)).thenReturn(5);
+        when(paymentCardRepository.countPaymentCardsById(1L)).thenReturn(MAX_CARDS_PER_USER);
 
         assertThrows(UserHaveTooManyCardsException.class,
                 () -> userService.createPaymentCard(1L, dto));
