@@ -1,6 +1,5 @@
 package org.innowise.internship.userservice.model.dto.response.user;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
