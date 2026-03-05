@@ -4,9 +4,9 @@ spring:
       on-profile: test
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/user_service_test
-    username: postgres_test
-    password: postgres_test_password
+    url: jdbc:postgresql://localhost:5432/test_db
+    username: test
+    password: test
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -33,10 +33,10 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: ${REDIS_DATABASE:0}
+      host: localhost
+      port: 6379
+      password: "test_password"
+      database: 0
       timeout: 2000ms
       lettuce:
         pool:
@@ -48,10 +48,10 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://keycloak:8080/realms/online-market}
+          issuer-uri: http://localhost:8081/realms/test-realm
 
   main:
     allow-bean-definition-overriding: true
 
 server:
-  port: 0
+  port: 8080

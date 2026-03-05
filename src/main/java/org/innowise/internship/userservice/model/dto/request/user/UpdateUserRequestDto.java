@@ -1,6 +1,5 @@
 package org.innowise.internship.userservice.model.dto.request.user;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 

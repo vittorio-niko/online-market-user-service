@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class UserProfileResponseDto {
     private Long id;
+    private String authId;
     private String name;
     private String surname;
     private String email;

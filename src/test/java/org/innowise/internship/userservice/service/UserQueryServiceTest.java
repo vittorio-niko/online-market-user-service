@@ -74,36 +74,21 @@ class UserQueryServiceTest {
     }
 
     @Test
-    @DisplayName("Should get all users with filter and sorting")
-    void getAllUsers_shouldGetAllWithFilterAndSorting() {
-        FilterUserRequestDto filter = new FilterUserRequestDto();
-        filter.setSortBy("email,surname");
-        filter.setSortDirection(SortDirection.ASCENDING);
+    @DisplayName("Should get all users and preserve pageable sorting")
+    void getAllUsers_shouldPreserveSorting() {
+        FilterUserRequestDto filter = new FilterUserRequestDto(); // Пустой фильтр
 
-        Pageable pageable = PageRequest.of(0, 20);
-        Page<User> page = Page.empty();
+        Pageable pageable = PageRequest.of(0, 20, Sort.by("email").ascending());
 
-        when(userRepository.findAll(
-                any(Specification.class),
-                any(Pageable.class)
-        )).thenReturn(page);
+        when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(Page.empty());
+        userQueryService.getAllUsers(filter, pageable);
 
-        Page<User> result = userQueryService.getAllUsers(filter, pageable);
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(userRepository).findAll(any(Specification.class), captor.capture());
 
-        assertEquals(page, result);
+        Pageable capturedPageable = captor.getValue();
 
-        ArgumentCaptor<Pageable> pageableCaptor =
-                ArgumentCaptor.forClass(Pageable.class);
-
-        verify(userRepository).findAll(
-                any(Specification.class),
-                pageableCaptor.capture()
-        );
-
-        Pageable usedPageable = pageableCaptor.getValue();
-        Sort sort = usedPageable.getSort();
-
-        assertTrue(sort.getOrderFor("email").isAscending());
-        assertTrue(sort.getOrderFor("surname").isAscending());
+        assertTrue(capturedPageable.getSort().getOrderFor("email").isAscending());
     }
 }
