@@ -10,30 +10,36 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface UserResponseMapper {
+    @Mapping(target = "authId", source = "keycloakId")
     UserResponseDto toUserResponseDto(@NonNull User user);
 
     List<UserResponseDto> toUserResponseDtoList(@NonNull List<User> users);
 
+    @Mapping(target = "authId", source = "keycloakId")
     UserWithCardsResponseDto toUserWithCardsResponseDto(@NonNull User user);
 
     List<UserWithCardsResponseDto> toUserWithCardsResponseDtoList(@NonNull List<User> users);
 
+    @Mapping(target = "authId", source = "keycloakId")
     UserProfileResponseDto toUserProfileResponseDto(@NonNull User user);
 
     List<UserProfileResponseDto> toUserProfileResponseDtoList(@NonNull List<User> users);
 
+    @Mapping(target = "authId", source = "keycloakId")
     UserProfileWithCardsResponseDto toUserProfileWithCardsResponseDto(@NonNull User user);
 
     List<UserProfileWithCardsResponseDto> toUserProfileWithCardsResponseDtoList(@NonNull List<User> users);
 
     @Mapping(target = "fullName",
                 expression = "java(getFullName(user.getName(), user.getSurname()))")
+    @Mapping(target = "authId", source = "keycloakId")
     UserSummaryResponseDto toUserSummaryResponseDto(@NonNull User user);
 
     List<UserSummaryResponseDto> toUserSummaryResponseDtoList(@NonNull List<User> users);
 
     @Mapping(target = "fullName",
             expression = "java(getFullName(user.getName(), user.getSurname()))")
+    @Mapping(target = "authId", source = "keycloakId")
     UserSummaryWithCardsResponseDto toUserSummaryWithCardsResponseDto(@NonNull User user);
 
     List<UserSummaryWithCardsResponseDto> toUserSummaryWithCardsResponseDtoList(@NonNull List<User> users);

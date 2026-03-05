@@ -62,11 +62,11 @@ class AdminControllerJwtSecurityIT extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/admin/users/" + userId))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
     @Test
-    @DisplayName("User cannot access to admin api")
+    @DisplayName("User cannot access admin api")
     void shouldReturn403_whenUserRole() throws Exception {
         Long userId = createTestUser();
 
@@ -75,7 +75,7 @@ class AdminControllerJwtSecurityIT extends AbstractIntegrationTest {
                                 new SimpleGrantedAuthority("ROLE_USER")
                         )))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.error").value("FORBIDDEN"));
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
     }
 
     @Test
