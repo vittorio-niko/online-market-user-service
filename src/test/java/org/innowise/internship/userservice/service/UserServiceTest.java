@@ -166,7 +166,6 @@ class UserServiceTest {
     @DisplayName("Should create payment card successfully")
     void createPaymentCard_shouldCreateSuccessfully() {
         CreatePaymentCardRequestDto dto = new CreatePaymentCardRequestDto();
-        dto.setUserId(1L);
         dto.setNumber("1111222233334444");
         dto.setExpirationDate(LocalDate.now().plusDays(1));
 
@@ -177,16 +176,16 @@ class UserServiceTest {
         PaymentCard card = new PaymentCard();
 
         when(paymentCardRepository.existsByNumber(dto.getNumber())).thenReturn(false);
-        when(userRepository.findById(dto.getUserId())).thenReturn(Optional.of(user));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(paymentCardRequestMapper.toPaymentCard(dto)).thenReturn(card);
-        when(paymentCardRepository.countPaymentCardsById(dto.getUserId())).thenReturn(0);
+        when(paymentCardRepository.countPaymentCardsById(1L)).thenReturn(0);
 
         card.setId(1L); // id generated
         when(userRepository.saveAndFlush(user)).thenReturn(user);
         card.setActive(true); // active status is attached
         when(paymentCardRepository.findByNumber(any())).thenReturn(Optional.of(card));
 
-        PaymentCard result = userService.createPaymentCard(dto);
+        PaymentCard result = userService.createPaymentCard(1L, dto);
 
         assertTrue(result.getActive());
         assertEquals(user, result.getUser());
@@ -202,7 +201,7 @@ class UserServiceTest {
         when(paymentCardRepository.existsByNumber(dto.getNumber())).thenReturn(true);
 
         assertThrows(PaymentCardAlreadyUsedException.class,
-                () -> userService.createPaymentCard(dto));
+                () -> userService.createPaymentCard(1L, dto));
     }
 
     @Test
@@ -212,27 +211,25 @@ class UserServiceTest {
         dto.setExpirationDate(LocalDate.now().minusDays(1));
 
         assertThrows(PaymentCardAlreadyExpiredException.class,
-                () -> userService.createPaymentCard(dto));
+                () -> userService.createPaymentCard(1L, dto));
     }
 
     @Test
     @DisplayName("Should throw NotFoundException when creating card for non-existent user")
     void createPaymentCard_shouldThrowNotFound() {
         CreatePaymentCardRequestDto dto = new CreatePaymentCardRequestDto();
-        dto.setUserId(1L);
         dto.setExpirationDate(LocalDate.now().plusDays(1));
         when(paymentCardRepository.existsByNumber(dto.getNumber())).thenReturn(false);
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
-                () -> userService.createPaymentCard(dto));
+                () -> userService.createPaymentCard(1L, dto));
     }
 
     @Test
     @DisplayName("Should throw InactiveUserException when creating card for inactive user")
     void createPaymentCard_shouldThrowInactiveUser() {
         CreatePaymentCardRequestDto dto = new CreatePaymentCardRequestDto();
-        dto.setUserId(1L);
         dto.setExpirationDate(LocalDate.now().plusDays(1));
 
         User user = new User();
@@ -242,14 +239,13 @@ class UserServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         assertThrows(InactiveUserException.class,
-                () -> userService.createPaymentCard(dto));
+                () -> userService.createPaymentCard(1L, dto));
     }
 
     @Test
     @DisplayName("Should throw UserHaveTooManyCardsException when user has maximum cards")
     void createPaymentCard_shouldThrowUserHaveTooManyCards() {
         CreatePaymentCardRequestDto dto = new CreatePaymentCardRequestDto();
-        dto.setUserId(1L);
         dto.setExpirationDate(LocalDate.now().plusDays(1));
 
         User user = new User();
@@ -260,14 +256,13 @@ class UserServiceTest {
         when(paymentCardRepository.countPaymentCardsById(1L)).thenReturn(5);
 
         assertThrows(UserHaveTooManyCardsException.class,
-                () -> userService.createPaymentCard(dto));
+                () -> userService.createPaymentCard(1L, dto));
     }
 
     @Test
     @DisplayName("Should throw PaymentCardAlreadyExpiredException when card expiration date is in past")
     void createPaymentCard_shouldThrowPaymentCardAlreadyExpiredForPastDate() {
         CreatePaymentCardRequestDto dto = new CreatePaymentCardRequestDto();
-        dto.setUserId(1L);
         dto.setNumber("1234567812345678");
         dto.setExpirationDate(LocalDate.of(1980, 1, 1));
 
@@ -275,7 +270,7 @@ class UserServiceTest {
                 .thenReturn(false);
 
         assertThrows(PaymentCardAlreadyExpiredException.class,
-                () -> userService.createPaymentCard(dto));
+                () -> userService.createPaymentCard(1L, dto));
     }
 
     // activatePaymentCard / deactivatePaymentCard
