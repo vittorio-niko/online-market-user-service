@@ -98,8 +98,6 @@ public class UserController {
     public ResponseEntity<PaymentCardSummaryResponseDto> createPaymentCard(
             @RequestBody @Valid CreatePaymentCardRequestDto dto
     ) {
-        //dto.setUserId(currentUserProvider.getCurrentInternalId());
-
         PaymentCardSummaryResponseDto responseDto = paymentCardResponseMapper
                 .toPaymentCardSummaryResponseDto(
                 userService.createPaymentCard(currentUserProvider.getCurrentInternalId(), dto)
