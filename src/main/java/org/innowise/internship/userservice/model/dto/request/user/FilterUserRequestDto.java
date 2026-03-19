@@ -30,7 +30,4 @@ public class FilterUserRequestDto {
 
     private LocalDateTime createdFrom;
     private LocalDateTime createdTo;
-
-    private String sortBy = "name,surname";
-    private SortDirection sortDirection = SortDirection.ASCENDING;
 }

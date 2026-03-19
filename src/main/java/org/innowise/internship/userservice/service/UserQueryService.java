@@ -44,21 +44,8 @@ public class UserQueryService {
     @Transactional(readOnly = true)
     public Page<User> getAllUsers(@NonNull FilterUserRequestDto filter,
                                   @NonNull Pageable pageable) {
-        Sort sort = Sort.by(
-                filter.getSortDirection() == SortDirection.ASCENDING
-                        ? Sort.Direction.ASC
-                        : Sort.Direction.DESC,
-                filter.getSortBy().split(",")
-        );
-
-        Pageable sortedPageable = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                sort
-        );
-
         Specification<User> specification = UserSpecification.filter(filter);
 
-        return userRepository.findAll(specification, sortedPageable);
+        return userRepository.findAll(specification, pageable);
     }
 }
