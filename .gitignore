@@ -35,6 +35,11 @@ auto-import.
 *.ipr
 
 .env
+k8s/resolved-compose.yaml
+k8s/user-service/user-service-secret.yaml
+k8s/user-service/user-db-secret.yaml
+k8s/auth-service/auth-service-secret.yaml
+k8s/auth-service/auth-db-secret.yaml
 
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
