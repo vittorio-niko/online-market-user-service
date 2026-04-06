@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: keycloak
+  name: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:24.0
+          args:
+            - start
+            - --http-enabled=true
+            - --hostname-strict-https=false
+            - --proxy=edge
+            - --hostname=auth.market.local
+            - --hostname-strict=false
+          env:
+            - name: KC_HOSTNAME
+              value: auth.market.local
+            - name: KC_PROXY
+              value: edge
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: auth-service-config-map
+            - secretRef:
+                name: auth-service-secret
+          resources:
+            limits:
+              memory: 512Mi
+            requests:
+              memory: 256Mi
+      restartPolicy: Always
