@@ -51,6 +51,7 @@ public class SecurityConfig {
     ) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/users", "/users/").hasRole("ADMIN")
                     .requestMatchers("/users/**").hasRole("USER")
                     .requestMatchers("/admin/**").hasRole("ADMIN")
