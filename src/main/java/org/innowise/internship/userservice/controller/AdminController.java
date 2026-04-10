@@ -2,6 +2,7 @@ package org.innowise.internship.userservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.innowise.internship.userservice.model.dto.request.user.FilterUserRequestDto;
 import org.innowise.internship.userservice.model.dto.response.paymentcard.PaymentCardSummaryResponseDto;
 import org.innowise.internship.userservice.model.dto.response.user.UserResponseDto;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RequestMapping("/admin/users")
 @RequiredArgsConstructor
 @Validated
@@ -34,6 +36,7 @@ public class AdminController {
     public ResponseEntity<UserResponseDto> getUserById(
             @PathVariable Long id
     ) {
+        log.info("Admin request: fetching user by id: {}", id);
         UserResponseDto responseDto = userResponseMapper.toUserResponseDto(
                 userQueryService.getUserById(id)
         );
@@ -45,6 +48,7 @@ public class AdminController {
             @Valid FilterUserRequestDto filter,
             Pageable pageable
     ) {
+        log.info("Admin request: fetching users with filter: {}", filter);
         Page<UserResponseDto> response =
                 userQueryService.getAllUsers(filter, pageable)
                         .map(userResponseMapper::toUserResponseDto);
@@ -56,6 +60,7 @@ public class AdminController {
     public ResponseEntity<List<PaymentCardSummaryResponseDto>> getUserCards(
             @PathVariable Long userId
     ) {
+        log.info("Admin request: fetching cards for user id: {}", userId);
         List<PaymentCardSummaryResponseDto> responseDtoList =
                 paymentCardResponseMapper.toPaymentCardSummaryResponseDtoList(
                         paymentCardQueryService.getPaymentCardsByUserId(userId)
@@ -65,18 +70,21 @@ public class AdminController {
 
     @PutMapping("/{id}/activate")
     public ResponseEntity<Void> activateUser(@PathVariable Long id) {
+        log.info("Admin action: activating user id: {}", id);
         userService.activateUserById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivateUser(@PathVariable Long id) {
+        log.info("Admin action: deactivating user id: {}", id);
         userService.deactivateUserById(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        log.info("Admin action: deleting user id: {}", id);
         userService.deleteUserById(id);
         return ResponseEntity.noContent().build();
     }
@@ -86,6 +94,7 @@ public class AdminController {
             @PathVariable Long userId,
             @PathVariable Long cardId
     ) {
+        log.info("Admin action: activating card id: {} for user id: {}", cardId, userId);
         userService.activatePaymentCard(userId, cardId);
         return ResponseEntity.noContent().build();
     }
@@ -95,6 +104,7 @@ public class AdminController {
             @PathVariable Long userId,
             @PathVariable Long cardId
     ) {
+        log.info("Admin action: deactivating card id: {} for user id: {}", cardId, userId);
         userService.deactivatePaymentCard(userId, cardId);
         return ResponseEntity.noContent().build();
     }
