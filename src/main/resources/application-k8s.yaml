@@ -55,6 +55,14 @@ server:
   port: 8080
 
 logging:
+  level:
+    root: INFO
+    org.springframework: WARN
+    org.springframework.web: WARN
+    org.hibernate: WARN
+    com.zaxxer.hikari: WARN
+    okhttp3: WARN
+    org.innowise.internship: INFO
   pattern:
     level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
 
