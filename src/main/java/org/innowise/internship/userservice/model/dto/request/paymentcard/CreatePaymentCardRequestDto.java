@@ -17,9 +17,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class CreatePaymentCardRequestDto {
-    @NotNull
-    private Long userId;
-
     @NotBlank
     @Size(min = 16, max = 16)
     @Pattern(regexp = "^[0-9]+$")

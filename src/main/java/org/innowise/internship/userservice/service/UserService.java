@@ -101,7 +101,7 @@ public class UserService {
     }
 
     @Transactional
-    public PaymentCard createPaymentCard(@NonNull CreatePaymentCardRequestDto dto) {
+    public PaymentCard createPaymentCard(@NonNull Long userId, @NonNull CreatePaymentCardRequestDto dto) {
         if (paymentCardRepository.existsByNumber(dto.getNumber())) {
             throw new PaymentCardAlreadyUsedException("Card number already exists");
         }
@@ -110,14 +110,14 @@ public class UserService {
             throw new PaymentCardAlreadyExpiredException("Card is already expired");
         }
 
-        User user = userRepository.findById(dto.getUserId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (!user.getActive()) {
             throw new InactiveUserException("Inactive user cannot create cards");
         }
 
-        int cardCount = paymentCardRepository.countPaymentCardsById(dto.getUserId());
+        int cardCount = paymentCardRepository.countPaymentCardsById(userId);
         if (cardCount >= MAX_CARDS_PER_USER) {
             throw new UserHaveTooManyCardsException(String.format(
                     "User cannot have more than %d cards", MAX_CARDS_PER_USER

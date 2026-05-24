@@ -163,6 +163,6 @@ class UserControllerJwtSecurityIT extends AbstractIntegrationTest {
                 .contentType(JSON)
                 .content(updateJson))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.error").value("FORBIDDEN"));
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
     }
 }

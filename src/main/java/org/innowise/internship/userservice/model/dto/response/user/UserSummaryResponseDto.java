@@ -12,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class UserSummaryResponseDto {
     private Long id;
+    private String authId;
     private String fullName;
     private String email;
 }
