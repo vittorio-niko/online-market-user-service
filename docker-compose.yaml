@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  postgres:
+  user-db:
     image: postgres:15
     container_name: user-postgres
     environment:
@@ -17,6 +17,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - local_market_net
 
   redis:
     image: redis:7
@@ -29,6 +31,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - local_market_net
 
   keycloak-postgres:
     image: postgres:15
@@ -44,6 +48,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - local_market_net
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
@@ -63,6 +69,8 @@ services:
 
     ports:
       - "8081:8080"
+    networks:
+      - local_market_net
 
   user-service:
     build: .
@@ -71,7 +79,7 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      DB_URL: jdbc:postgresql://postgres:5432/user_service
+      DB_URL: jdbc:postgresql://user-db:5432/user_service
       DB_USERNAME: postgres
       DB_PASSWORD: postgres_password
 
@@ -85,7 +93,7 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/online-market
 
     depends_on:
-      postgres:
+      user-db:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -93,16 +101,21 @@ services:
         condition: service_started
 
     healthcheck:
-      test: ["CMD-SHELL", "for i in $(seq 1 10); do curl -f http://localhost:8080/actuator/health && exit 0 || sleep 3; done; exit 1"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - local_market_net
 
 volumes:
   pgdata:
   keycloak_pgdata:
 
+networks:
+  local_market_net:
+    external: true
 
 
 
