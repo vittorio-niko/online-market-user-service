@@ -70,6 +70,8 @@ fabric.properties
 ### Intellij Patch ###
 modules.xml
 .idea/misc.xml
+.idea/vcs.xml
+target/
 
 # Sonarlint plugin
 # https://plugins.jetbrains.com/plugin/7973-sonarlint
