@@ -82,7 +82,7 @@ services:
 
       SERVER_PORT: 8080
 
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/user-service
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/online-market
 
     depends_on:
       postgres:
