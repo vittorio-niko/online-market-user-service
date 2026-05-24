@@ -9,7 +9,7 @@ import org.innowise.internship.userservice.model.mapper.request.PaymentCardReque
 import org.innowise.internship.userservice.model.mapper.request.UserRequestMapper;
 import org.innowise.internship.userservice.repository.PaymentCardRepository;
 import org.innowise.internship.userservice.repository.UserRepository;
-import org.innowise.internship.userservice.service.exception.*;
+import org.innowise.internship.userservice.service.exception.businessexception.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,7 +79,7 @@ class UserServiceTest {
         when(userRepository.save(user))
                 .thenThrow(new DataIntegrityViolationException("duplicate"));
 
-        assertThrows(EmailAlreadyUsedException.class,
+        assertThrows(UserAlreadyExistsException.class,
                 () -> userService.createUser(dto));
     }
 

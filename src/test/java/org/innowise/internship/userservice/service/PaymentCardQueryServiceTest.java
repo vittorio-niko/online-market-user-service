@@ -3,7 +3,7 @@ package org.innowise.internship.userservice.service;
 import org.innowise.internship.userservice.model.entity.PaymentCard;
 import org.innowise.internship.userservice.repository.PaymentCardRepository;
 import org.innowise.internship.userservice.repository.UserRepository;
-import org.innowise.internship.userservice.service.exception.*;
+import org.innowise.internship.userservice.service.exception.businessexception.NotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

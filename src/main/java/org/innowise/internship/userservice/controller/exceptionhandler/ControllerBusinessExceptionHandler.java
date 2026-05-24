@@ -1,7 +1,7 @@
 package org.innowise.internship.userservice.controller.exceptionhandler;
 
 import lombok.NonNull;
-import org.innowise.internship.userservice.service.exception.*;
+import org.innowise.internship.userservice.service.exception.businessexception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
-public class ControllerExceptionHandler {
+public class ControllerBusinessExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(
             @NonNull NotFoundException e
@@ -35,6 +35,19 @@ public class ControllerExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(
                         ErrorCode.EMAIL_DUPLICATE_CONFLICT,
+                        e.getMessage(),
+                        null
+                ));
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExists(
+            @NonNull UserAlreadyExistsException e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(
+                        ErrorCode.USER_CONFLICT,
                         e.getMessage(),
                         null
                 ));

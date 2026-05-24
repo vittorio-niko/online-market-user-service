@@ -12,7 +12,9 @@ import org.innowise.internship.userservice.model.mapper.response.UserResponseMap
 import org.innowise.internship.userservice.service.PaymentCardQueryService;
 import org.innowise.internship.userservice.service.UserQueryService;
 import org.innowise.internship.userservice.service.UserService;
+import org.innowise.internship.userservice.controller.security.UserSecurity;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,7 @@ import java.util.List;
 @RestController
 public class UserController {
     private final UserService userService;
+    private final UserSecurity userSecurity;
     private final UserQueryService userQueryService;
     private final PaymentCardQueryService paymentCardQueryService;
 
@@ -32,6 +35,7 @@ public class UserController {
     private final PaymentCardResponseMapper paymentCardResponseMapper;
 
     @GetMapping("/{id}")
+    @PreAuthorize("@userSecurity.isOwner(#id)")
     public ResponseEntity<UserProfileResponseDto> getUserById(
             @PathVariable Long id
     ) {
@@ -55,6 +59,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@userSecurity.isOwner(#id)")
     public ResponseEntity<UserProfileResponseDto> updateUserById(
             @PathVariable Long id,
             @RequestBody @Valid UpdateUserRequestDto dto
@@ -67,12 +72,14 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@userSecurity.isOwner(#id)")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUserById(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{userId}/cards")
+    @PreAuthorize("@userSecurity.isOwner(#userId)")
     public ResponseEntity<List<PaymentCardSummaryResponseDto>> getUserCards(
             @PathVariable Long userId
     ) {
@@ -84,6 +91,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}/cards/{cardId}")
+    @PreAuthorize("@userSecurity.isOwner(#userId)")
     public ResponseEntity<PaymentCardSummaryResponseDto> getUserCardById(
             @PathVariable Long userId,
             @PathVariable Long cardId
@@ -95,6 +103,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/cards")
+    @PreAuthorize("@userSecurity.isOwner(#userId)")
     public ResponseEntity<PaymentCardSummaryResponseDto> createPaymentCard(
             @PathVariable Long userId,
             @RequestBody @Valid CreatePaymentCardRequestDto dto
@@ -112,6 +121,7 @@ public class UserController {
     }
 
     @PutMapping("/{userId}/cards/{cardId}/activate")
+    @PreAuthorize("@userSecurity.isOwner(#userId)")
     public ResponseEntity<Void> activatePaymentCard(
             @PathVariable Long userId,
             @PathVariable Long cardId
@@ -121,6 +131,7 @@ public class UserController {
     }
 
     @PutMapping("/{userId}/cards/{cardId}/deactivate")
+    @PreAuthorize("@userSecurity.isOwner(#userId)")
     public ResponseEntity<Void> deactivatePaymentCard(
             @PathVariable Long userId,
             @PathVariable Long cardId
@@ -130,6 +141,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}/cards/{cardId}")
+    @PreAuthorize("@userSecurity.isOwner(#userId)")
     public ResponseEntity<Void> deletePaymentCard(
             @PathVariable Long userId,
             @PathVariable Long cardId

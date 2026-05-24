@@ -3,17 +3,21 @@ package org.innowise.internship.userservice.integrationtest;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+import org.innowise.internship.userservice.controller.security.UserSecurity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -24,6 +28,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserCacheIT extends AbstractIntegrationTest {
     @Autowired
     private EntityManagerFactory entityManagerFactory;
+
+    @MockBean
+    private UserSecurity userSecurity;
 
     private Statistics hibernateStats() {
         SessionFactory sf = entityManagerFactory.unwrap(SessionFactory.class);
@@ -37,17 +44,20 @@ public class UserCacheIT extends AbstractIntegrationTest {
         jdbcTemplate.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
         jdbcTemplate.execute("TRUNCATE TABLE payment_cards RESTART IDENTITY CASCADE");
         clearAllCaches();
+        when(userSecurity.isOwner(anyLong())).thenReturn(true);
     }
 
     private Long createTestUser() throws Exception {
-        String userJson = """
+        String keycloakId = java.util.UUID.randomUUID().toString();
+        String userJson = String.format("""
                 {
+                  "keycloakId": "%s",
                   "name": "John",
                   "surname": "Doe",
                   "birthDate": "1990-01-01",
                   "email": "john.doe@example.com"
                 }
-                """;
+                """, keycloakId);
 
         String response = mockMvc.perform(post("/users")
                         .contentType(JSON)
@@ -178,4 +188,3 @@ public class UserCacheIT extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 }
-

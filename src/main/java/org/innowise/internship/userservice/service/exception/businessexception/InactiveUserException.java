@@ -1,4 +1,4 @@
-package org.innowise.internship.userservice.service.exception;
+package org.innowise.internship.userservice.service.exception.businessexception;
 
 public class InactiveUserException extends BusinessException {
     public InactiveUserException(String message) { super(message); }

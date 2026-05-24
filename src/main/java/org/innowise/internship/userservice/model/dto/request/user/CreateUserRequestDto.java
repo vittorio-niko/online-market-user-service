@@ -19,6 +19,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CreateUserRequestDto {
     @NotBlank
+    private String keycloakId;
+
+    @NotBlank
     @Size(min = 1, max = 100)
     private String name;
 

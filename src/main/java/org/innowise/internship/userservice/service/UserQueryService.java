@@ -6,7 +6,7 @@ import org.hibernate.query.SortDirection;
 import org.innowise.internship.userservice.model.dto.request.user.FilterUserRequestDto;
 import org.innowise.internship.userservice.model.entity.User;
 import org.innowise.internship.userservice.repository.UserRepository;
-import org.innowise.internship.userservice.service.exception.NotFoundException;
+import org.innowise.internship.userservice.service.exception.businessexception.NotFoundException;
 import org.innowise.internship.userservice.service.specification.UserSpecification;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
