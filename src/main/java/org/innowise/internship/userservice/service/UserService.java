@@ -12,6 +12,10 @@ import org.innowise.internship.userservice.model.mapper.request.UserRequestMappe
 import org.innowise.internship.userservice.repository.PaymentCardRepository;
 import org.innowise.internship.userservice.repository.UserRepository;
 import org.innowise.internship.userservice.service.exception.*;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +49,11 @@ public class UserService {
     }
 
     @Transactional
+    @Caching(
+            put = {
+                   @CachePut(value = "UserQueryService::getUserById", key = "#id")
+           }
+    )
     public User updateUserById(Long id, @NonNull UpdateUserRequestDto dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found by id"));
@@ -56,6 +65,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "UserQueryService::getUserById", key = "#id")
     public void activateUserById(Long id) {
         int updatedRows = userRepository.updateActiveStatus(id, true);
         if (updatedRows == 0) {
@@ -64,6 +74,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "UserQueryService::getUserById", key = "#id")
     public void deactivateUserById(Long id) {
         int updatedRows = userRepository.updateActiveStatus(id, false);
         if (updatedRows == 0) {
@@ -72,6 +83,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "UserQueryService::getUserById", key = "#id")
     public void deleteUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found by id"));
