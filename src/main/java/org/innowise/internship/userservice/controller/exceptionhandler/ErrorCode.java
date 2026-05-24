@@ -12,5 +12,6 @@ public enum ErrorCode {
     INACTIVE_USER_ACTION,
     INVALID_ARGUMENT,
     FORBIDDEN,
+    UNAUTHORIZED,
     INTERNAL_ERROR
 }

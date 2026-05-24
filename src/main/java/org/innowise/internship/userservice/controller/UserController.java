@@ -2,6 +2,7 @@ package org.innowise.internship.userservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.innowise.internship.userservice.controller.securitycontext.CurrentUserProvider;
 import org.innowise.internship.userservice.model.dto.request.paymentcard.CreatePaymentCardRequestDto;
 import org.innowise.internship.userservice.model.dto.request.user.CreateUserRequestDto;
 import org.innowise.internship.userservice.model.dto.request.user.UpdateUserRequestDto;
@@ -12,9 +13,7 @@ import org.innowise.internship.userservice.model.mapper.response.UserResponseMap
 import org.innowise.internship.userservice.service.PaymentCardQueryService;
 import org.innowise.internship.userservice.service.UserQueryService;
 import org.innowise.internship.userservice.service.UserService;
-import org.innowise.internship.userservice.controller.security.UserSecurity;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
@@ -27,20 +26,17 @@ import java.util.List;
 @RestController
 public class UserController {
     private final UserService userService;
-    private final UserSecurity userSecurity;
+    private final CurrentUserProvider currentUserProvider;
     private final UserQueryService userQueryService;
     private final PaymentCardQueryService paymentCardQueryService;
 
     private final UserResponseMapper userResponseMapper;
     private final PaymentCardResponseMapper paymentCardResponseMapper;
 
-    @GetMapping("/{id}")
-    @PreAuthorize("@userSecurity.isOwner(#id)")
-    public ResponseEntity<UserProfileResponseDto> getUserById(
-            @PathVariable Long id
-    ) {
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileResponseDto> getCurrentUser() {
         UserProfileResponseDto responseDto = userResponseMapper.toUserProfileResponseDto(
-                userQueryService.getUserById(id)
+                userQueryService.getUserById(currentUserProvider.getCurrentInternalId())
         );
         return ResponseEntity.ok(responseDto);
     }
@@ -58,57 +54,51 @@ public class UserController {
                 .body(response);
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("@userSecurity.isOwner(#id)")
-    public ResponseEntity<UserProfileResponseDto> updateUserById(
-            @PathVariable Long id,
+    @PutMapping("/me")
+    public ResponseEntity<UserProfileResponseDto> updateCurrentUserById(
             @RequestBody @Valid UpdateUserRequestDto dto
     ) {
         UserProfileResponseDto responseDto =  userResponseMapper.toUserProfileResponseDto(
-                userService.updateUserById(id, dto)
+                userService.updateUserById(currentUserProvider.getCurrentInternalId(), dto)
         );
 
         return ResponseEntity.ok(responseDto);
     }
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("@userSecurity.isOwner(#id)")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUserById(id);
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteCurrentUser() {
+        userService.deleteUserById(currentUserProvider.getCurrentInternalId());
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{userId}/cards")
-    @PreAuthorize("@userSecurity.isOwner(#userId)")
-    public ResponseEntity<List<PaymentCardSummaryResponseDto>> getUserCards(
-            @PathVariable Long userId
-    ) {
+    @GetMapping("/my-cards")
+    public ResponseEntity<List<PaymentCardSummaryResponseDto>> getUserCards() {
         List<PaymentCardSummaryResponseDto> responseDtoList =
                 paymentCardResponseMapper.toPaymentCardSummaryResponseDtoList(
-                        paymentCardQueryService.getPaymentCardsByUserId(userId)
+                        paymentCardQueryService.getPaymentCardsByUserId(
+                                currentUserProvider.getCurrentInternalId()
+                        )
                 );
         return ResponseEntity.ok(responseDtoList);
     }
 
-    @GetMapping("/{userId}/cards/{cardId}")
-    @PreAuthorize("@userSecurity.isOwner(#userId)")
+    @GetMapping("/my-cards/{cardId}")
     public ResponseEntity<PaymentCardSummaryResponseDto> getUserCardById(
-            @PathVariable Long userId,
             @PathVariable Long cardId
     ) {
         PaymentCardSummaryResponseDto responseDto = paymentCardResponseMapper.toPaymentCardSummaryResponseDto(
-                paymentCardQueryService.getPaymentCardByIdAndUserId(cardId, userId)
+                paymentCardQueryService.getPaymentCardByIdAndUserId(
+                        cardId, currentUserProvider.getCurrentInternalId()
+                )
         );
         return ResponseEntity.ok(responseDto);
     }
 
-    @PostMapping("/{userId}/cards")
-    @PreAuthorize("@userSecurity.isOwner(#userId)")
+    @PostMapping("/my-cards")
     public ResponseEntity<PaymentCardSummaryResponseDto> createPaymentCard(
-            @PathVariable Long userId,
             @RequestBody @Valid CreatePaymentCardRequestDto dto
     ) {
-        dto.setUserId(userId);
+        dto.setUserId(currentUserProvider.getCurrentInternalId());
 
         PaymentCardSummaryResponseDto responseDto = paymentCardResponseMapper
                 .toPaymentCardSummaryResponseDto(
@@ -120,33 +110,27 @@ public class UserController {
                 .body(responseDto);
     }
 
-    @PutMapping("/{userId}/cards/{cardId}/activate")
-    @PreAuthorize("@userSecurity.isOwner(#userId)")
+    @PutMapping("/my-cards/{cardId}/activate")
     public ResponseEntity<Void> activatePaymentCard(
-            @PathVariable Long userId,
             @PathVariable Long cardId
     ) {
-        userService.activatePaymentCard(userId, cardId);
+        userService.activatePaymentCard(currentUserProvider.getCurrentInternalId(), cardId);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{userId}/cards/{cardId}/deactivate")
-    @PreAuthorize("@userSecurity.isOwner(#userId)")
+    @PutMapping("/my-cards/{cardId}/deactivate")
     public ResponseEntity<Void> deactivatePaymentCard(
-            @PathVariable Long userId,
             @PathVariable Long cardId
     ) {
-        userService.deactivatePaymentCard(userId, cardId);
+        userService.deactivatePaymentCard(currentUserProvider.getCurrentInternalId(), cardId);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{userId}/cards/{cardId}")
-    @PreAuthorize("@userSecurity.isOwner(#userId)")
+    @DeleteMapping("/my-cards/{cardId}")
     public ResponseEntity<Void> deletePaymentCard(
-            @PathVariable Long userId,
             @PathVariable Long cardId
     ) {
-        userService.deletePaymentCard(userId, cardId);
+        userService.deletePaymentCard(currentUserProvider.getCurrentInternalId(), cardId);
         return ResponseEntity.noContent().build();
     }
 }

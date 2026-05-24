@@ -1,5 +1,6 @@
 package org.innowise.internship.userservice.integrationtest.controllertest;
 
+import org.innowise.internship.userservice.controller.securitycontext.CurrentUserProvider;
 import org.innowise.internship.userservice.integrationtest.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,14 +14,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.innowise.internship.userservice.controller.security.UserSecurity;
 import org.junit.jupiter.api.DisplayName;
 import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 @Testcontainers
@@ -29,14 +28,13 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("test")
 public class UserControllerIT extends AbstractIntegrationTest {
     @MockBean
-    private UserSecurity userSecurity;
+    private CurrentUserProvider currentUserProvider;
 
     @BeforeEach
     void cleanDb() {
         jdbcTemplate.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
         jdbcTemplate.execute("TRUNCATE TABLE payment_cards RESTART IDENTITY CASCADE");
         clearAllCaches();
-        when(userSecurity.isOwner(anyLong())).thenReturn(true);
     }
 
     // methods for creating default user and card
@@ -73,7 +71,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().plusYears(1).format(DATE_FORMATTER));
 
-        String response = mockMvc.perform(post("/users/" + userId + "/cards")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        String response = mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(cardJson))
                 .andExpect(status().isCreated())
@@ -219,14 +218,15 @@ public class UserControllerIT extends AbstractIntegrationTest {
     void getUserById_shouldGetSuccessfully() throws Exception {
         Long userId = createTestUser();
 
-        mockMvc.perform(get("/users/" + userId)
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/me")
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId))
                 .andExpect(jsonPath("$.name").value("John"))
                 .andExpect(jsonPath("$.email").value("john.doe@example.com"));
 
-        mockMvc.perform(get("/users/" + userId)
+        mockMvc.perform(get("/users/me")
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId))
@@ -237,7 +237,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should return not found when getting non-existent user by id")
     void getUserById_shouldReturnNotFoundForNonExistentUser() throws Exception {
-        mockMvc.perform(get("/users/9999")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(999999L);
+        mockMvc.perform(get("/users/me")
                         .contentType(JSON))
                 .andExpect(status().isNotFound());
     }
@@ -255,7 +256,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(put("/users/" + userId)
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(put("/users/me")
                         .contentType(JSON)
                         .content(updateJson))
                 .andExpect(status().isOk())
@@ -274,7 +276,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(put("/users/999999")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(999999L);
+        mockMvc.perform(put("/users/me")
                         .contentType(JSON)
                         .content(updateJson))
                 .andExpect(status().isNotFound());
@@ -292,7 +295,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(put("/users/" + userId)
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(put("/users/me")
                         .contentType(JSON)
                         .content(invalidDateJson))
                 .andExpect(status().isBadRequest());
@@ -303,20 +307,13 @@ public class UserControllerIT extends AbstractIntegrationTest {
     void deleteUser_shouldDeleteSuccessfully() throws Exception {
         Long userId = createTestUser();
 
-        mockMvc.perform(delete("/users/" + userId)
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(delete("/users/me")
                         .contentType(JSON))
                 .andExpect(status().isNoContent());
 
         // verify user is deleted
-        mockMvc.perform(get("/users/" + userId)
-                        .contentType(JSON))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("Should return not found when deleting non-existent user")
-    void deleteUser_shouldReturnNotFoundForNonExistentUser() throws Exception {
-        mockMvc.perform(delete("/users/999999")
+        mockMvc.perform(get("/admin/users/" + userId)
                         .contentType(JSON))
                 .andExpect(status().isNotFound());
     }
@@ -335,7 +332,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().plusYears(2).format(DATE_FORMATTER));
 
-        mockMvc.perform(post("/users/" + userId + "/cards")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(cardJson))
                 .andExpect(status().isCreated())
@@ -360,7 +358,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().plusYears(1).format(DATE_FORMATTER));
 
-        mockMvc.perform(post("/users/" + userId + "/cards")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(shortNumberJson))
                 .andExpect(status().isBadRequest());
@@ -375,7 +374,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().plusYears(1).format(DATE_FORMATTER));
 
-        mockMvc.perform(post("/users/" + userId + "/cards")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(nonNumericJson))
                 .andExpect(status().isBadRequest());
@@ -395,7 +395,7 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().minusMonths(1).format(DATE_FORMATTER));
 
-        mockMvc.perform(post("/users/" + userId + "/cards")
+        mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(expiredCardJson))
                 .andExpect(status().isBadRequest());
@@ -416,7 +416,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().plusYears(3).format(DATE_FORMATTER));
 
-        mockMvc.perform(post("/users/" + userId + "/cards")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(duplicateCardJson))
                 .andExpect(status().isConflict());
@@ -426,6 +427,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
     @DisplayName("Should return bad request when user reaches maximum card limit")
     void createPaymentCard_shouldReturnBadRequestForMaxCardsLimit() throws Exception {
         Long userId = createTestUser();
+
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
 
         // create 5 cards
         for (int i = 0; i < 5; i++) {
@@ -438,7 +441,7 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, i, i, LocalDate.now().plusYears(1).format(DATE_FORMATTER));
 
-            mockMvc.perform(post("/users/" + userId + "/cards")
+            mockMvc.perform(post("/users/my-cards")
                             .contentType(JSON)
                             .content(cardJson))
                     .andExpect(status().isCreated());
@@ -454,7 +457,7 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().plusYears(1).format(DATE_FORMATTER));
 
-        mockMvc.perform(post("/users/" + userId + "/cards")
+        mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(sixthCardJson))
                 .andExpect(status().isBadRequest());
@@ -466,7 +469,7 @@ public class UserControllerIT extends AbstractIntegrationTest {
         Long userId = createTestUser();
         Long cardId1 = createTestPaymentCard(userId);
 
-        // Create second card
+        // create second card
         String secondCardJson = String.format("""
                 {
                   "userId": %d,
@@ -476,12 +479,12 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().plusYears(1).format(DATE_FORMATTER));
 
-        mockMvc.perform(post("/users/" + userId + "/cards")
+        mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(secondCardJson))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/users/" + userId + "/cards")
+        mockMvc.perform(get("/users/my-cards")
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -494,7 +497,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
     void getUserCards_shouldReturnEmptyListForNoCards() throws Exception {
         Long userId = createTestUser();
 
-        mockMvc.perform(get("/users/" + userId + "/cards")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/my-cards")
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", empty()));
@@ -506,7 +510,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
         Long userId = createTestUser();
         Long cardId = createTestPaymentCard(userId);
 
-        mockMvc.perform(get("/users/" + userId + "/cards/" + cardId)
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/my-cards/" + cardId)
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(cardId))
@@ -519,7 +524,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
     void getUserCardById_shouldReturnNotFoundForNonExistentCard() throws Exception {
         Long userId = createTestUser();
 
-        mockMvc.perform(get("/users/" + userId + "/cards/999999")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(get("/users/my-cards/999999")
                         .contentType(JSON))
                 .andExpect(status().isNotFound());
     }
@@ -530,12 +536,13 @@ public class UserControllerIT extends AbstractIntegrationTest {
         Long userId = createTestUser();
         Long cardId = createTestPaymentCard(userId);
 
-        mockMvc.perform(put("/users/" + userId + "/cards/" + cardId + "/activate")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(put("/users/my-cards/" + cardId + "/activate")
                         .contentType(JSON))
                 .andExpect(status().isNoContent());
 
         // verify card is active
-        mockMvc.perform(get("/users/" + userId + "/cards/" + cardId)
+        mockMvc.perform(get("/users/my-cards/" + cardId)
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(true));
@@ -547,12 +554,13 @@ public class UserControllerIT extends AbstractIntegrationTest {
         Long userId = createTestUser();
         Long cardId = createTestPaymentCard(userId);
 
-        mockMvc.perform(put("/users/" + userId + "/cards/" + cardId + "/deactivate")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(put("/users/my-cards/" + cardId + "/deactivate")
                         .contentType(JSON))
                 .andExpect(status().isNoContent());
 
         // verify card is deactivated
-        mockMvc.perform(get("/users/" + userId + "/cards/" + cardId)
+        mockMvc.perform(get("/users/my-cards/" + cardId)
                         .contentType(JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));
@@ -564,12 +572,13 @@ public class UserControllerIT extends AbstractIntegrationTest {
         Long userId = createTestUser();
         Long cardId = createTestPaymentCard(userId);
 
-        mockMvc.perform(delete("/users/" + userId + "/cards/" + cardId)
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(delete("/users/my-cards/" + cardId)
                         .contentType(JSON))
                 .andExpect(status().isNoContent());
 
         // verify card is deleted
-        mockMvc.perform(get("/users/" + userId + "/cards/" + cardId)
+        mockMvc.perform(get("/users/my-cards/" + cardId)
                         .contentType(JSON))
                 .andExpect(status().isNotFound());
     }
@@ -579,7 +588,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
     void deletePaymentCard_shouldReturnNotFoundForNonExistentCard() throws Exception {
         Long userId = createTestUser();
 
-        mockMvc.perform(delete("/users/" + userId + "/cards/9999999999")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(delete("/users/my-cards/9999999999")
                         .contentType(JSON))
                 .andExpect(status().isNotFound());
     }
@@ -605,7 +615,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 }
                 """, userId, LocalDate.now().plusYears(1).format(DATE_FORMATTER));
 
-        mockMvc.perform(post("/users/" + userId + "/cards")
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(post("/users/my-cards")
                         .contentType(JSON)
                         .content(cardJson))
                 .andExpect(status().isBadRequest());
@@ -623,7 +634,8 @@ public class UserControllerIT extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // try to delete card for inactive user
-        mockMvc.perform(delete("/users/" + userId + "/cards/" + cardId)
+        when(currentUserProvider.getCurrentInternalId()).thenReturn(userId);
+        mockMvc.perform(delete("/users/my-cards/" + cardId)
                         .contentType(JSON))
                 .andExpect(status().isBadRequest());
     }

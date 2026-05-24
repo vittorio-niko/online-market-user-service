@@ -90,7 +90,10 @@ public class UserService {
     }
 
     @Transactional
-    @CacheEvict(value = "UserQueryService::getUserById", key = "#id")
+    @Caching(evict = {
+            @CacheEvict(value = "UserQueryService::getUserById", key = "#id"),
+            @CacheEvict(value = "UserQueryService::getInternalIdByKeycloakId", allEntries = true)
+    })
     public void deleteUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found by id"));
