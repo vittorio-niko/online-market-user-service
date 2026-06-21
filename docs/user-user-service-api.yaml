@@ -1,0 +1,643 @@
+openapi: 3.0.3
+info:
+  title: User Service API (User)
+  description: API for users to manage their own profile and payment cards
+  version: 1.0.0
+servers:
+  - url: http://market.local
+    description: Local development server
+
+paths:
+  /users/me:
+    get:
+      tags:
+        - User Profile
+      summary: Get current user's profile
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponseDto'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user account is inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INACTIVE_USER_ACTION
+                message: User account is inactive
+                fieldErrors: null
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+    put:
+      tags:
+        - User Profile
+      summary: Update current user's profile
+      operationId: updateCurrentUserById
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequestDto'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponseDto'
+        '400':
+          description: Invalid request (validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INVALID_ARGUMENT
+                message: Validation failed
+                fieldErrors:
+                  name: "size must be between 1 and 100"
+                  birthDate: "must be a date in the past or present"
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user account is inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+    delete:
+      tags:
+        - User Profile
+      summary: Delete current user's account (soft delete)
+      operationId: deleteCurrentUser
+      responses:
+        '204':
+          description: User account deleted successfully
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user account is inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /users:
+    post:
+      tags:
+        - User Registration
+      summary: Create a new user account
+      description: Public endpoint for user registration
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequestDto'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponseDto'
+        '400':
+          description: Invalid request (validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INVALID_ARGUMENT
+                message: Validation failed
+                fieldErrors:
+                  email: "must be a well-formed email address"
+                  keycloakId: "must not be blank"
+        '409':
+          description: User conflict (email or keycloakId already exists)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: EMAIL_DUPLICATE_CONFLICT
+                message: User with email 'user@example.com' already exists
+                fieldErrors: null
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security: []
+
+  /users/my-cards:
+    get:
+      tags:
+        - User Payment Cards
+      summary: Get current user's payment cards
+      operationId: getUserCards
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentCardSummaryResponseDto'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user account is inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+    post:
+      tags:
+        - User Payment Cards
+      summary: Add a new payment card
+      operationId: createPaymentCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentCardRequestDto'
+      responses:
+        '201':
+          description: Card added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentCardSummaryResponseDto'
+        '400':
+          description: Invalid request (validation failed or business rule violation)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validationError:
+                  summary: Validation failed
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: Validation failed
+                    fieldErrors:
+                      number: "must be exactly 16 digits"
+                      expirationDate: "must be a future date"
+                cardExpired:
+                  summary: Card already expired
+                  value:
+                    code: CARD_EXPIRED
+                    message: Cannot add an expired card
+                    fieldErrors: null
+                cardLimitExceeded:
+                  summary: Too many cards
+                  value:
+                    code: CARDS_COUNT_LIMIT_OVERFLOW
+                    message: User already has maximum number of cards
+                    fieldErrors: null
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user account is inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Card already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: CARD_DUPLICATE_CONFLICT
+                message: This card has already been added by another user
+                fieldErrors: null
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /users/my-cards/{cardId}:
+    get:
+      tags:
+        - User Payment Cards
+      summary: Get a specific payment card by ID
+      operationId: getUserCardById
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Payment card ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentCardSummaryResponseDto'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user account is inactive or card belongs to another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+    delete:
+      tags:
+        - User Payment Cards
+      summary: Delete a payment card
+      operationId: deletePaymentCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Payment card ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Card deleted successfully
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user account is inactive or card belongs to another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /users/my-cards/{cardId}/activate:
+    put:
+      tags:
+        - User Payment Cards
+      summary: Activate a payment card
+      operationId: activatePaymentCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Payment card ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Card activated successfully
+        '400':
+          description: Bad request (card already active or expired)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: CARD_EXPIRED
+                message: Cannot activate expired card
+                fieldErrors: null
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user account is inactive or card belongs to another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /users/my-cards/{cardId}/deactivate:
+    put:
+      tags:
+        - User Payment Cards
+      summary: Deactivate a payment card
+      operationId: deactivatePaymentCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: Payment card ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Card deactivated successfully
+        '400':
+          description: Bad request (card already inactive)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user account is inactive or card belongs to another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    UserProfileResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        authId:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        email:
+          type: string
+          format: email
+        birthDate:
+          type: string
+          format: date
+        active:
+          type: boolean
+
+    CreateUserRequestDto:
+      type: object
+      required:
+        - keycloakId
+        - name
+        - surname
+        - birthDate
+        - email
+      properties:
+        keycloakId:
+          type: string
+          description: External Keycloak user identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        surname:
+          type: string
+          minLength: 1
+          maxLength: 100
+        birthDate:
+          type: string
+          format: date
+          description: Date of birth (must be in the past or present)
+        email:
+          type: string
+          format: email
+          maxLength: 255
+
+    UpdateUserRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        surname:
+          type: string
+          minLength: 1
+          maxLength: 100
+        birthDate:
+          type: string
+          format: date
+          description: Date of birth (must be in the past or present)
+
+    CreatePaymentCardRequestDto:
+      type: object
+      required:
+        - number
+        - holder
+        - expirationDate
+      properties:
+        number:
+          type: string
+          minLength: 16
+          maxLength: 16
+          pattern: '^[0-9]+$'
+          description: 16-digit card number
+          example: "4111111111111111"
+        holder:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Cardholder name
+        expirationDate:
+          type: string
+          format: date
+          description: Expiration date (must be in the future)
+
+    PaymentCardSummaryResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        maskedNumber:
+          type: string
+          description: Only last 4 digits shown
+          example: "**** **** **** 1234"
+        holder:
+          type: string
+        active:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      description: Standard error response format used across all endpoints
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+          enum:
+            - RESOURCE_NOT_FOUND
+            - EMAIL_DUPLICATE_CONFLICT
+            - KEYCLOAK_ID_DUPLICATE_CONFLICT
+            - USER_CONFLICT
+            - CARD_DUPLICATE_CONFLICT
+            - CARDS_COUNT_LIMIT_OVERFLOW
+            - CARD_NUMBER_CONFLICT
+            - CARD_EXPIRED
+            - INACTIVE_USER_ACTION
+            - INVALID_ARGUMENT
+            - FORBIDDEN
+            - UNAUTHORIZED
+            - INTERNAL_ERROR
+          example: INVALID_ARGUMENT
+        message:
+          type: string
+          description: Human-readable error description
+          example: Validation failed
+        fieldErrors:
+          type: object
+          description: Map of field names to validation error messages (only for validation errors)
+          additionalProperties:
+            type: string
+          nullable: true
+          example:
+            email: "must be a well-formed email address"
+            number: "must be exactly 16 digits"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication
