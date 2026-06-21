@@ -1,0 +1,613 @@
+openapi: 3.0.3
+info:
+  title: User Service API (Admin)
+  description: API for managing users and payment cards with ADMIN role privileges
+  version: 1.0.0
+servers:
+  - url: http://market.local
+    description: Local development server
+
+paths:
+  /admin/users/{id}:
+    get:
+      tags:
+        - Admin Users
+      summary: Get user by ID
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseDto'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access forbidden (ADMIN role required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: RESOURCE_NOT_FOUND
+                message: User with id 123 not found
+                fieldErrors: null
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+    delete:
+      tags:
+        - Admin Users
+      summary: Delete a user (soft delete)
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: User deleted successfully
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access forbidden (ADMIN role required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /admin/users:
+    get:
+      tags:
+        - Admin Users
+      summary: Get all users with filtering and pagination
+      operationId: getAllUsers
+      parameters:
+        - name: name
+          in: query
+          description: Filter by user name (partial match)
+          schema:
+            type: string
+        - name: surname
+          in: query
+          description: Filter by user surname (partial match)
+          schema:
+            type: string
+        - name: email
+          in: query
+          description: Filter by exact email
+          schema:
+            type: string
+            format: email
+        - name: active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: bornFrom
+          in: query
+          description: Filter by birth date from (inclusive)
+          schema:
+            type: string
+            format: date
+        - name: bornTo
+          in: query
+          description: Filter by birth date to (inclusive)
+          schema:
+            type: string
+            format: date
+        - name: createdFrom
+          in: query
+          description: Filter by creation date from (inclusive)
+          schema:
+            type: string
+            format: date-time
+        - name: createdTo
+          in: query
+          description: Filter by creation date to (inclusive)
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          description: Page number (starting from 0)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sorting parameters (e.g., "createdAt,desc")
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageUserResponseDto'
+        '400':
+          description: Invalid filter or pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access forbidden (ADMIN role required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /admin/users/{userId}/cards:
+    get:
+      tags:
+        - Admin Payment Cards
+      summary: Get all payment cards for a user
+      operationId: getUserCardsAdmin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentCardSummaryResponseDto'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access forbidden (ADMIN role required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /admin/users/{id}/activate:
+    put:
+      tags:
+        - Admin Users
+      summary: Activate a user account
+      operationId: activateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: User activated successfully
+        '400':
+          description: Bad request (e.g., user already active)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INACTIVE_USER_ACTION
+                message: Cannot activate user that is already active
+                fieldErrors: null
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access forbidden (ADMIN role required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /admin/users/{id}/deactivate:
+    put:
+      tags:
+        - Admin Users
+      summary: Deactivate a user account
+      operationId: deactivateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: User deactivated successfully
+        '400':
+          description: Bad request (e.g., user already inactive)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INACTIVE_USER_ACTION
+                message: Cannot deactivate user that is already inactive
+                fieldErrors: null
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access forbidden (ADMIN role required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /admin/users/{userId}/cards/{cardId}/activate:
+    put:
+      tags:
+        - Admin Payment Cards
+      summary: Activate a payment card for a user
+      operationId: activatePaymentCardAdmin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+        - name: cardId
+          in: path
+          required: true
+          description: Payment card ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Card activated successfully
+        '400':
+          description: Bad request (e.g., card already active or expired)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: CARD_EXPIRED
+                message: Cannot activate expired card
+                fieldErrors: null
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access forbidden (ADMIN role required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User or card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /admin/users/{userId}/cards/{cardId}/deactivate:
+    put:
+      tags:
+        - Admin Payment Cards
+      summary: Deactivate a payment card for a user
+      operationId: deactivatePaymentCardAdmin
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+        - name: cardId
+          in: path
+          required: true
+          description: Payment card ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Card deactivated successfully
+        '400':
+          description: Bad request (e.g., card already inactive)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access forbidden (ADMIN role required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User or card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    UserResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        authId:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        email:
+          type: string
+          format: email
+        birthDate:
+          type: string
+          format: date
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PaymentCardSummaryResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        maskedNumber:
+          type: string
+          description: Only last 4 digits shown
+          example: "**** **** **** 1234"
+        holder:
+          type: string
+        active:
+          type: boolean
+
+    PageUserResponseDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponseDto'
+        pageable:
+          type: object
+          properties:
+            pageNumber:
+              type: integer
+            pageSize:
+              type: integer
+            sort:
+              type: object
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          type: object
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        empty:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      description: Standard error response format used across all endpoints
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+          enum:
+            - RESOURCE_NOT_FOUND
+            - EMAIL_DUPLICATE_CONFLICT
+            - KEYCLOAK_ID_DUPLICATE_CONFLICT
+            - USER_CONFLICT
+            - CARD_DUPLICATE_CONFLICT
+            - CARDS_COUNT_LIMIT_OVERFLOW
+            - CARD_NUMBER_CONFLICT
+            - CARD_EXPIRED
+            - INACTIVE_USER_ACTION
+            - INVALID_ARGUMENT
+            - FORBIDDEN
+            - UNAUTHORIZED
+            - INTERNAL_ERROR
+          example: INVALID_ARGUMENT
+        message:
+          type: string
+          description: Human-readable error description
+          example: Validation failed
+        fieldErrors:
+          type: object
+          description: Map of field names to validation error messages (only for validation errors)
+          additionalProperties:
+            type: string
+          nullable: true
+          example:
+            email: "must be a well-formed email address"
+            name: "must not be blank"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication (ADMIN role required)
